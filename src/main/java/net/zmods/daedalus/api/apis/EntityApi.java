@@ -1,5 +1,7 @@
 package net.zmods.daedalus.api.apis;
 
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.zmods.daedalus.api.LuaApiRegistry;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -8,6 +10,8 @@ import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
+import org.luaj.vm2.lib.jse.CoerceJavaToLua;
+
 import java.util.UUID;
 
 
@@ -124,6 +128,18 @@ public class EntityApi implements LuaApiRegistry.LuaApiModule {
                 Entity e = (Entity) entityArg.checkuserdata(Entity.class);
                 e.kill(e.level() instanceof net.minecraft.server.level.ServerLevel serverLevel ? serverLevel : null);
                 return NIL;
+            }
+        });
+
+        table.set("getHeldItem", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue entityArg) {
+                Entity entity = (Entity) entityArg.checkuserdata(Entity.class);
+                if (!(entity instanceof LivingEntity living)) {
+                    return NIL;
+                }
+                ItemStack stack = living.getMainHandItem();
+                return CoerceJavaToLua.coerce(stack);
             }
         });
     }

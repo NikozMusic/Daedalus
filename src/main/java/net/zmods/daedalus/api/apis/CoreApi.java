@@ -28,17 +28,5 @@ public class CoreApi implements LuaApiRegistry.LuaApiModule {
                 return NIL;
             }
         });
-
-        table.set("getHeldItem", new OneArgFunction() {
-            @Override
-            public LuaValue call(LuaValue entityArg) {
-                Entity entity = (Entity) entityArg.checkuserdata(Entity.class);
-                if (!(entity instanceof LivingEntity living)) {
-                    return NIL;
-                }
-                ItemStack stack = living.getMainHandItem();
-                return CoerceJavaToLua.coerce(stack);
-            }
-        });
     }
 }
