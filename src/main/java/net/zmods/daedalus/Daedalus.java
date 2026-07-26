@@ -37,6 +37,8 @@ public class Daedalus implements ModInitializer {
 			apiRegistry.registerApi(new DataApi());
 			apiRegistry.registerApi(new BlockApi());
 			apiRegistry.registerApi(new PlayerApi(server));
+			apiRegistry.registerApi(new GuiApi());
+			apiRegistry.registerApi(new ItemApi());
 
 			moduleManager = new ModuleManager(
 					server.getServerDirectory().toFile(),

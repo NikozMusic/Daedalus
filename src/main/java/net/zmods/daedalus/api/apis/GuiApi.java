@@ -1,12 +1,15 @@
 package net.zmods.daedalus.api.apis;
 
 import net.zmods.daedalus.api.LuaApiRegistry;
+import net.zmods.daedalus.gui.DaedalusChestMenu;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
@@ -21,10 +24,10 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import static net.minecraft.world.inventory.ContainerInput.*;
+
 public class GuiApi implements LuaApiRegistry.LuaApiModule {
 
-    // Tracks the title we assigned to each open menu, since vanilla's ChestMenu
-    // doesn't expose a reliable way to read the display name back out.
     private static final Map<AbstractContainerMenu, String> menuTitles = new WeakHashMap<>();
 
     @Override
@@ -55,16 +58,28 @@ public class GuiApi implements LuaApiRegistry.LuaApiModule {
             }
 
             @Override
-            public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, net.minecraft.world.entity.player.Player player) {
-                return new ChestMenu(menuType, syncId, playerInventory, inventory, rows);
+            public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
+                return new DaedalusChestMenu(menuType, syncId, playerInventory, inventory, rows);
             }
+        };
+    }
+
+    private static String clickTypeToString(ContainerInput clickType, int button) {
+        return switch (clickType) {
+            case PICKUP -> button == 0 ? "left" : "right";
+            case QUICK_MOVE -> button == 0 ? "shift_left" : "shift_right";
+            case SWAP -> "hotbar_swap";
+            case CLONE -> "middle";
+            case THROW -> button == 0 ? "drop" : "drop_all";
+            case QUICK_CRAFT -> "drag";
+            case PICKUP_ALL -> "double_click";
+            default -> "other";
         };
     }
 
     @Override
     public void register(LuaTable table, Globals globals) {
 
-        // gui.open(player, "My Title", 3) -> opens a 3-row (27 slot) chest GUI, returns the menu
         table.set("open", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
@@ -87,37 +102,27 @@ public class GuiApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-        // gui.getOpen(player) -> currently open menu, or nil if just their own inventory
         table.set("getOpen", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue playerArg) {
                 ServerPlayer sp = (ServerPlayer) playerArg.checkuserdata(ServerPlayer.class);
                 AbstractContainerMenu menu = sp.containerMenu;
-
-                if (menu == sp.inventoryMenu) {
-                    return NIL;
-                }
+                if (menu == sp.inventoryMenu) return NIL;
                 return CoerceJavaToLua.coerce(menu);
             }
         });
 
-        // gui.getTitle(player) -> title string assigned via gui.open, or nil
         table.set("getTitle", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue playerArg) {
                 ServerPlayer sp = (ServerPlayer) playerArg.checkuserdata(ServerPlayer.class);
                 AbstractContainerMenu menu = sp.containerMenu;
-
-                if (menu == sp.inventoryMenu) {
-                    return NIL;
-                }
-
+                if (menu == sp.inventoryMenu) return NIL;
                 String title = menuTitles.get(menu);
                 return title != null ? LuaValue.valueOf(title) : NIL;
             }
         });
 
-        // gui.close(player) -> force-closes whatever menu the player has open
         table.set("close", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue playerArg) {
@@ -127,7 +132,6 @@ public class GuiApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-        // gui.setItem(menu, slot, itemStack) -> places an item in a slot (0-indexed)
         table.set("setItem", new ThreeArgFunction() {
             @Override
             public LuaValue call(LuaValue menuArg, LuaValue slotArg, LuaValue itemArg) {
@@ -145,7 +149,6 @@ public class GuiApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-        // gui.getItem(menu, slot) -> ItemStack in that slot, or nil if empty
         table.set("getItem", new TwoArgFunction() {
             @Override
             public LuaValue call(LuaValue menuArg, LuaValue slotArg) {
@@ -162,7 +165,6 @@ public class GuiApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-        // gui.clearItem(menu, slot) -> removes whatever is in that slot
         table.set("clearItem", new TwoArgFunction() {
             @Override
             public LuaValue call(LuaValue menuArg, LuaValue slotArg) {
@@ -179,12 +181,37 @@ public class GuiApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-        // gui.getSlotCount(menu) -> total number of slots (including the player's own inventory slots appended by ChestMenu)
         table.set("getSlotCount", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue menuArg) {
                 AbstractContainerMenu menu = (AbstractContainerMenu) menuArg.checkuserdata(AbstractContainerMenu.class);
                 return LuaValue.valueOf(menu.slots.size());
+            }
+        });
+
+        // gui.onClick(menu, function(player, slot, clickType) ... end)
+        table.set("onClick", new TwoArgFunction() {
+            @Override
+            public LuaValue call(LuaValue menuArg, LuaValue function) {
+                AbstractContainerMenu menu = (AbstractContainerMenu) menuArg.checkuserdata(AbstractContainerMenu.class);
+
+                if (!(menu instanceof DaedalusChestMenu daedalusMenu)) {
+                    return error("onClick can only be used on menus created via gui.open");
+                }
+                if (!function.isfunction()) {
+                    return error("Second argument must be a function");
+                }
+
+                daedalusMenu.setClickHandler((player, slot, clickType, button) -> {
+                    String typeStr = clickTypeToString(clickType, button);
+                    function.invoke(LuaValue.varargsOf(new LuaValue[]{
+                            CoerceJavaToLua.coerce(player),
+                            LuaValue.valueOf(slot),
+                            LuaValue.valueOf(typeStr)
+                    }));
+                });
+
+                return NIL;
             }
         });
     }
