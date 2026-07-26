@@ -22,6 +22,7 @@ Full API documentation can be found here:
 ## Example
 
 ```lua
-events.on("tick", function()
-    print("Hello from Daedalus!")
+event.bindGlobal(Events.TICK, function()
+    command.execute("Say Hello from Daedalus!")
+    minecraft.log("Only the console can see this!")
 end)
