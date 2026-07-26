@@ -48,8 +48,10 @@ public class Daedalus implements ModInitializer {
 					DaedalusCommand.register(dispatcher));
 		}
 
-		ServerTickEvents.END_SERVER_TICK.register(server ->
-				EventFirer.fireGlobalEvent(Events.TICK));
+		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			net.zmods.daedalus.event.TickTracker.increment();
+			EventFirer.fireGlobalEvent(Events.TICK);
+		});
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
 				EventFirer.fireGlobalEvent(Events.PLAYER_JOIN, CoerceJavaToLua.coerce(handler.getPlayer())));
