@@ -10,9 +10,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.resources.Identifier;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 
-//Misc functionality that has to execute on Minecraft's engine itself such as logging to the console
-//This includes functions that don't yet have their own dedicated api
-
 public class ItemApi implements LuaApiRegistry.LuaApiModule {
 
     @Override
