@@ -42,19 +42,6 @@ public class PlayerApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-        // player.getOnline() -> table of player entities (userdata)
-        table.set("getOnline", new VarArgFunction() {
-            @Override
-            public Varargs invoke(Varargs args) {
-                LuaTable result = new LuaTable();
-                int i = 1;
-                for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
-                    result.set(i++, CoerceJavaToLua.coerce(sp));
-                }
-                return result;
-            }
-        });
-
         // player.getByName("Steve") -> player entity, or nil if not online
         table.set("getByName", new OneArgFunction() {
             @Override
