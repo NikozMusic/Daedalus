@@ -25,7 +25,7 @@ public class PlayerApi implements LuaApiRegistry.LuaApiModule {
 
     @Override
     public String getNamespace() {
-        return "player";
+        return "players";
     }
 
     @Override
