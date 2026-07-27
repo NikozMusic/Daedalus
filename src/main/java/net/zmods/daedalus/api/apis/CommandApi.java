@@ -29,11 +29,11 @@ public class CommandApi implements LuaApiRegistry.LuaApiModule {
                 try {
                     CommandSourceStack source = server.createCommandSourceStack();
                     server.getCommands().performPrefixedCommand(source, command);
-                    return LuaValue.valueOf(1);
+                    return LuaValue.valueOf(true);
                 } catch (Exception e) {
                     System.err.println("[Daedalus] Command error: " + e.getMessage());
                     e.printStackTrace();
-                    return LuaValue.valueOf(0);
+                    return LuaValue.valueOf(false);
                 }
             }
         });
