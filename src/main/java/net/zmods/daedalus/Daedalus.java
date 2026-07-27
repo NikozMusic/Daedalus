@@ -16,6 +16,14 @@ import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+
 
 public class Daedalus implements ModInitializer {
 	public static final String MODID = "daedalus";
@@ -39,6 +47,7 @@ public class Daedalus implements ModInitializer {
 			apiRegistry.registerApi(new PlayerApi(server));
 			apiRegistry.registerApi(new GuiApi());
 			apiRegistry.registerApi(new ItemApi());
+			apiRegistry.registerApi(new ServerApi(server));
 			apiRegistry.registerApi(new MiniMessageApi(server));
 
 			moduleManager = new ModuleManager(
@@ -71,6 +80,44 @@ public class Daedalus implements ModInitializer {
 					CoerceJavaToLua.coerce(entity), LuaValue.valueOf(damageTaken));
 			EventFirer.fireEntityEvent(entity, Events.ENTITY_DAMAGE,
 					LuaValue.valueOf(damageTaken));
+		});
+
+		PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
+			EventFirer.fireGlobalEvent(Events.BLOCK_BREAK,
+					CoerceJavaToLua.coerce(player),
+					LuaValue.valueOf(pos.getX()), LuaValue.valueOf(pos.getY()), LuaValue.valueOf(pos.getZ()));
+		});
+
+		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+			var pos = hitResult.getBlockPos();
+			EventFirer.fireGlobalEvent(Events.BLOCK_INTERACT,
+					CoerceJavaToLua.coerce(player),
+					LuaValue.valueOf(pos.getX()), LuaValue.valueOf(pos.getY()), LuaValue.valueOf(pos.getZ()));
+			return InteractionResult.PASS;
+		});
+
+		UseItemCallback.EVENT.register((player, world, hand) -> {
+			EventFirer.fireGlobalEvent(
+					Events.ITEM_USE,
+					CoerceJavaToLua.coerce(player),
+					CoerceJavaToLua.coerce(player.getItemInHand(hand))
+			);
+			return InteractionResult.PASS;
+		});
+
+		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+			EventFirer.fireGlobalEvent(
+					Events.PLAYER_RESPAWN,
+					CoerceJavaToLua.coerce(newPlayer)
+			);
+		});
+
+		ServerLivingEntityEvents.AFTER_DEATH.register((entity, damageSource) -> {
+			EventFirer.fireGlobalEvent(Events.ENTITY_DEATH, CoerceJavaToLua.coerce(entity));
+			EventFirer.fireEntityEvent(entity, Events.ENTITY_DEATH);
+			if (entity instanceof ServerPlayer) {
+				EventFirer.fireGlobalEvent(Events.PLAYER_DEATH, CoerceJavaToLua.coerce(entity));
+			}
 		});
 	}
 
