@@ -33,6 +33,7 @@ public class DaedalusCommand {
                                 for (LoadedModule module : modules) {
                                     ctx.getSource().sendSuccess(() -> Component.literal(" - " + module.metadata.data.id
                                             + " §e(" + module.metadata.info.name + ")§r"), false);
+                                    ctx.getSource().sendSuccess(() -> Component.literal("§7§o   " + module.metadata.info.description), false);
                                 }
                             }
                             return 1;

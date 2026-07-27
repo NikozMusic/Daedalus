@@ -7,6 +7,7 @@ public enum Events {
     PLAYER_LEAVE("playerLeave"),
     PLAYER_DEATH("playerDeath"),
     PLAYER_RESPAWN("playerRespawn"),
+    PLAYER_CHAT("playerChat"),
 
     // Entity events
     ENTITY_JUMP("entityJump"),

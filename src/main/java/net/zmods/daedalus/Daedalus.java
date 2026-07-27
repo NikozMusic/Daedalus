@@ -23,6 +23,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 
 
 public class Daedalus implements ModInitializer {
@@ -118,6 +119,14 @@ public class Daedalus implements ModInitializer {
 			if (entity instanceof ServerPlayer) {
 				EventFirer.fireGlobalEvent(Events.PLAYER_DEATH, CoerceJavaToLua.coerce(entity));
 			}
+		});
+
+		ServerMessageEvents.CHAT_MESSAGE.register((message, sender, params) -> {
+			EventFirer.fireGlobalEvent(
+					Events.PLAYER_CHAT,
+					CoerceJavaToLua.coerce(sender),
+					LuaValue.valueOf(message.signedContent())
+			);
 		});
 	}
 
