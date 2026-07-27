@@ -2,8 +2,8 @@ package net.zmods.daedalus.api.apis;
 
 import net.zmods.daedalus.api.LuaApiRegistry;
 import net.zmods.daedalus.module.ModuleContext;
-import net.zmods.daedalus.tag.EntityDataHelper;
-import net.zmods.daedalus.tag.ItemDataHelper;
+import net.zmods.daedalus.data.EntityDataHelper;
+import net.zmods.daedalus.data.ItemDataHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import org.luaj.vm2.*;

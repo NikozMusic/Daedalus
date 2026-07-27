@@ -1,4 +1,4 @@
-package net.zmods.daedalus.tag;
+package net.zmods.daedalus.data;
 
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;

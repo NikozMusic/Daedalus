@@ -1,4 +1,4 @@
-package net.zmods.daedalus.tag;
+package net.zmods.daedalus.data;
 
 import com.google.gson.*;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
