@@ -48,7 +48,8 @@ public class PlayerApi implements LuaApiRegistry.LuaApiModule {
             public LuaValue call(LuaValue nameArg) {
                 ServerPlayer sp = server.getPlayerList().getPlayerByName(nameArg.checkjstring());
                 if (sp == null) return NIL;
-                return CoerceJavaToLua.coerce(sp);
+
+                return new LuaUserdata(sp);
             }
         });
 
