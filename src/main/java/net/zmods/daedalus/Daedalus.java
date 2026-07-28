@@ -1,11 +1,14 @@
 package net.zmods.daedalus;
 
+import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
 import net.zmods.daedalus.api.LuaApiRegistry;
 import net.zmods.daedalus.api.apis.*;
 import net.zmods.daedalus.command.DaedalusCommand;
@@ -29,9 +32,13 @@ import net.minecraft.resources.Identifier;
 
 
 public class Daedalus implements ModInitializer {
+
 	public static final String MODID = "daedalus";
 	public static final Logger LOGGER = LogUtils.getLogger();
 	private static ModuleManager moduleManager;
+
+	private static CommandDispatcher<CommandSourceStack> pendingDispatcher;
+	private static CommandBuildContext pendingBuildContext;
 
 	@Override
 	public void onInitialize() {
@@ -59,6 +66,9 @@ public class Daedalus implements ModInitializer {
 					server
 			);
 			moduleManager.discoverAndLoadAll();
+			if (pendingDispatcher != null) {
+				moduleManager.setCommandContext(pendingDispatcher, pendingBuildContext);
+			}
 			LOGGER.info("Daedalus module system initialized");
 		});
 
@@ -67,6 +77,15 @@ public class Daedalus implements ModInitializer {
 					DaedalusCommand.register(dispatcher));
 		}
 
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+			pendingDispatcher = dispatcher;
+			pendingBuildContext = registryAccess;
+			if (moduleManager != null) {
+				moduleManager.setCommandContext(dispatcher, registryAccess);
+			}
+		});
+
+		//Event bindings
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			net.zmods.daedalus.event.TickTracker.increment();
 			EventFirer.fireGlobalEvent(Events.TICK);

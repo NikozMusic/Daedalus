@@ -73,7 +73,7 @@ public class CoreApi implements LuaApiRegistry.LuaApiModule {
                 return LuaValue.NIL;
             }
         });
-        
+
 
     }
 }

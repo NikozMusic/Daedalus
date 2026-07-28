@@ -273,6 +273,8 @@ public class ModuleManager {
     }
 
     public void registerModuleCommands() {
+        System.out.println("[Daedalus] registerModuleCommands: dispatcher=" + (dispatcher != null)
+                + ", buildContext=" + (buildContext != null));
         if (dispatcher == null) return;
 
         // Drop whatever module commands were registered previously
