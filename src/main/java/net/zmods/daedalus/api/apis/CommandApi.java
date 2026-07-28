@@ -7,8 +7,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import org.luaj.vm2.*;
-import org.luaj.vm2.lib.OneArgFunction;
-import org.luaj.vm2.lib.TwoArgFunction;
+import org.luaj.vm2.lib.VarArgFunction;
 
 public class CommandApi implements LuaApiRegistry.LuaApiModule {
     private final MinecraftServer server;
@@ -49,44 +48,65 @@ public class CommandApi implements LuaApiRegistry.LuaApiModule {
         };
     }
 
+    // Strips a single leading '/' since CommandDispatcher.execute expects a bare command,
+    // unlike performPrefixedCommand which tolerates (and ignores) the slash.
+    private static String stripSlash(String command) {
+        return command.startsWith("/") ? command.substring(1) : command;
+    }
+
+    // Runs the command straight through Brigadier so we get the int result code back
+    // (e.g. 1 for a plain success, a count for things like "execute if ...", 0 on failure),
+    // instead of performPrefixedCommand which discards that result and only logs internally.
+    // Returns two Lua values: result (int), output (string).
+    private static Varargs runCommand(CommandSourceStack source, String command, StringBuilder output) {
+        try {
+            int result = source.getServer().getCommands().getDispatcher().execute(stripSlash(command), source);
+            return LuaValue.varargsOf(
+                    LuaValue.valueOf(result),
+                    LuaValue.valueOf(output.toString())
+            );
+        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+            // Syntax/argument errors are normal Brigadier failures, not bugs - no stack trace needed
+            return LuaValue.varargsOf(
+                    LuaValue.valueOf(0),
+                    LuaValue.valueOf(e.getMessage())
+            );
+        } catch (Exception e) {
+            System.err.println("[Daedalus] Command error: " + e.getMessage());
+            e.printStackTrace();
+            return LuaValue.varargsOf(
+                    LuaValue.valueOf(0),
+                    LuaValue.valueOf("")
+            );
+        }
+    }
+
     @Override
     public void register(LuaTable table, Globals globals) {
-        table.set("execute", new OneArgFunction() {
+        // command.execute("say hi") -> result:int, output:string
+        table.set("execute", new VarArgFunction() {
             @Override
-            public LuaValue call(LuaValue commandArg) {
-                String command = commandArg.checkjstring();
+            public Varargs invoke(Varargs args) {
+                String command = args.checkjstring(1);
                 StringBuilder output = new StringBuilder();
-                try {
-                    CommandSourceStack source = server.createCommandSourceStack()
-                            .withSource(capturingSource(output));
-                    server.getCommands().performPrefixedCommand(source, command);
-                    return LuaValue.valueOf(output.toString());
-                } catch (Exception e) {
-                    System.err.println("[Daedalus] Command error: " + e.getMessage());
-                    e.printStackTrace();
-                    return LuaValue.valueOf("");
-                }
+                CommandSourceStack source = server.createCommandSourceStack()
+                        .withSource(capturingSource(output));
+                return runCommand(source, command, output);
             }
         });
 
-        table.set("executeAs", new TwoArgFunction() {
+        // command.executeAs(entity, "say hi") -> result:int, output:string
+        table.set("executeAs", new VarArgFunction() {
             @Override
-            public LuaValue call(LuaValue entityArg, LuaValue commandArg) {
+            public Varargs invoke(Varargs args) {
+                Entity entity = (Entity) args.checkuserdata(1, Entity.class);
+                String command = args.checkjstring(2);
                 StringBuilder output = new StringBuilder();
-                try {
-                    Entity entity = (Entity) entityArg.checkuserdata(Entity.class);
-                    String command = commandArg.checkjstring();
 
-                    CommandSourceStack source = server.createCommandSourceStack()
-                            .withPosition(entity.position())
-                            .withSource(capturingSource(output));
-                    server.getCommands().performPrefixedCommand(source, command);
-                    return LuaValue.valueOf(output.toString());
-                } catch (Exception e) {
-                    System.err.println("[Daedalus] Command error: " + e.getMessage());
-                    e.printStackTrace();
-                    return LuaValue.valueOf("");
-                }
+                CommandSourceStack source = server.createCommandSourceStack()
+                        .withPosition(entity.position())
+                        .withSource(capturingSource(output));
+                return runCommand(source, command, output);
             }
         });
     }

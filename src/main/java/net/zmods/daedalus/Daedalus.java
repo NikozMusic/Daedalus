@@ -24,6 +24,8 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 
 
 public class Daedalus implements ModInitializer {
@@ -84,9 +86,11 @@ public class Daedalus implements ModInitializer {
 		});
 
 		PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
+			Identifier blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
 			EventFirer.fireGlobalEvent(Events.BLOCK_BREAK,
 					CoerceJavaToLua.coerce(player),
-					LuaValue.valueOf(pos.getX()), LuaValue.valueOf(pos.getY()), LuaValue.valueOf(pos.getZ()));
+					LuaValue.valueOf(pos.getX()), LuaValue.valueOf(pos.getY()), LuaValue.valueOf(pos.getZ()),
+					LuaValue.valueOf(blockId.toString()));
 		});
 
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
