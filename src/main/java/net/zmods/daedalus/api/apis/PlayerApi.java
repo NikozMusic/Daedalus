@@ -13,6 +13,13 @@ import org.luaj.vm2.*;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
+import net.minecraft.commands.arguments.selector.EntitySelector;
+import net.minecraft.commands.arguments.selector.EntitySelectorParser;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.Optional;
 
@@ -108,17 +115,6 @@ public class PlayerApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-        // player.isOp(playerEntity) -> boolean
-        /* CURRENTLY BROKEN
-        table.set("isOp", new OneArgFunction() {
-            @Override
-            public LuaValue call(LuaValue playerArg) {
-                ServerPlayer sp = (ServerPlayer) playerArg.checkuserdata(ServerPlayer.class);
-                return LuaValue.valueOf(server.getPlayerList().isOp(sp.getGameProfile()));
-            }
-        });
-        */
-
         // player.getGameMode(playerEntity) -> "survival"/"creative"/"adventure"/"spectator"
         table.set("getGameMode", new OneArgFunction() {
             @Override
@@ -151,5 +147,7 @@ public class PlayerApi implements LuaApiRegistry.LuaApiModule {
                 return NIL;
             }
         });
+
+
     }
 }

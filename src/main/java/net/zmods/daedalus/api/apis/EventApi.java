@@ -9,6 +9,14 @@ import org.luaj.vm2.*;
 import org.luaj.vm2.lib.TwoArgFunction;
 import org.luaj.vm2.lib.ThreeArgFunction;
 import org.luaj.vm2.lib.OneArgFunction;
+import net.minecraft.commands.arguments.selector.EntitySelector;
+import net.minecraft.commands.arguments.selector.EntitySelectorParser;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.commands.CommandSource;
+import org.luaj.vm2.lib.jse.CoerceJavaToLua;
+
+import java.util.List;
 
 public class EventApi implements LuaApiRegistry.LuaApiModule {
 
@@ -109,5 +117,35 @@ public class EventApi implements LuaApiRegistry.LuaApiModule {
                 return NIL;
             }
         });
+
+        table.set("getBySelector", new org.luaj.vm2.lib.TwoArgFunction() {
+            @Override
+            public LuaValue call(LuaValue sourceArg, LuaValue selectorArg) {
+                CommandSourceStack source = (CommandSourceStack) sourceArg.checkuserdata(CommandSourceStack.class);
+
+                String selectorString = selectorArg.checkjstring();
+
+                try {
+                    EntitySelector selector = new EntitySelectorParser(new com.mojang.brigadier.StringReader(selectorString), true)
+                            .parse();
+
+                    List<? extends Entity> entities = selector.findEntities(source);
+
+                    LuaTable result = new LuaTable();
+
+                    int index = 1;
+                    for (Entity entity : entities) {
+                        result.set(index++, CoerceJavaToLua.coerce(entity));
+                    }
+
+                    return result;
+
+                } catch (Exception e) {
+                    return error("Invalid selector: " + e.getMessage());
+                }
+            }
+        });
+
+
     }
 }

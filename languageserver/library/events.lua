@@ -48,24 +48,24 @@ event = {}
 ---signature table above for what args your function receives per event.
 ---@param eventId DaedalusEventId
 ---@param callback fun(...: any)
-function event.bindGlobal(eventId, callback) end
+function events.bindGlobal(eventId, callback) end
 
 ---Binds a listener scoped to a single entity instance.
 ---@param e Entity
 ---@param eventId DaedalusEventId
 ---@param callback fun(...: any)
-function event.bindEntity(e, eventId, callback) end
+function events.bindEntity(e, eventId, callback) end
 
 ---Removes this module's global listener(s) for the given event.
 ---@param eventId DaedalusEventId
-function event.unbindGlobal(eventId) end
+function events.unbindGlobal(eventId) end
 
 ---Removes this module's listener(s) for the given event on this entity.
 ---@param e Entity
 ---@param eventId DaedalusEventId
-function event.unbindEntity(e, eventId) end
+function events.unbindEntity(e, eventId) end
 
 ---Binds a global listener that automatically unbinds itself after firing once.
 ---@param eventId DaedalusEventId
 ---@param callback fun(...: any)
-function event.once(eventId, callback) end
+function events.once(eventId, callback) end

@@ -12,6 +12,7 @@ public class Config {
     public static boolean allowDeepSearch = false;
     public static int luaTimeoutSeconds = 5;
     public static boolean enableDaedalusCommand = true;
+    public static boolean reportErrorsToChat = true;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path CONFIG_PATH =
@@ -21,6 +22,7 @@ public class Config {
         boolean allowDeepSearch = false;
         int luaTimeoutSeconds = 5;
         boolean enableDaedalusCommand = true;
+        boolean reportErrorsToChat = true;
     }
 
     public static void load() {
@@ -31,6 +33,7 @@ public class Config {
             allowDeepSearch = data.allowDeepSearch;
             luaTimeoutSeconds = Math.max(1, Math.min(30, data.luaTimeoutSeconds));
             enableDaedalusCommand = data.enableDaedalusCommand;
+            reportErrorsToChat = data.reportErrorsToChat;
             save();
         } catch (IOException e) {
             e.printStackTrace();
@@ -42,6 +45,7 @@ public class Config {
         data.allowDeepSearch = allowDeepSearch;
         data.luaTimeoutSeconds = luaTimeoutSeconds;
         data.enableDaedalusCommand = enableDaedalusCommand;
+        data.reportErrorsToChat = reportErrorsToChat;
         Files.writeString(CONFIG_PATH, GSON.toJson(data));
     }
 }
