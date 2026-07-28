@@ -14,7 +14,7 @@ public class BlockApi implements LuaApiRegistry.LuaApiModule {
 
     @Override
     public String getNamespace() {
-        return "block";
+        return "blocks";
     }
 
     @Override

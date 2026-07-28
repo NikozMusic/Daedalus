@@ -14,7 +14,7 @@ public class EventApi implements LuaApiRegistry.LuaApiModule {
 
     @Override
     public String getNamespace() {
-        return "event";
+        return "events";
     }
 
     @Override
