@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.2",
+  "workspace.library": [
+    "library"
+  ],
+  "workspace.checkThirdParty": false,
+  "diagnostics.globals": [
+    "block", "entity", "item", "players", "data", "gui",
+    "command", "server", "text", "minecraft", "event",
+    "sender", "args", "argCount", "rawArgs"
+  ],
+  "diagnostics.disable": [
+    "lowercase-global"
+  ]
+}

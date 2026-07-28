@@ -354,7 +354,8 @@ public class ModuleManager {
         ModuleContext.set(def.moduleId);
         try {
             LuaValue chunk = globals.load(code, def.luaFileKey, cmdEnv);
-            chunk.call();
+            LuaThread thread = new LuaThread(globals, chunk);
+            thread.resume(LuaValue.NONE);
         } catch (Exception e) {
             System.err.println("[Daedalus] Error executing command '" + def.name + "' (module " + def.moduleId + ")");
             e.printStackTrace();

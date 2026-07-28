@@ -2,6 +2,7 @@ package net.zmods.daedalus.api.apis;
 
 import net.zmods.daedalus.Daedalus;
 import net.zmods.daedalus.api.LuaApiRegistry;
+import net.zmods.daedalus.event.LuaScheduler;
 import net.zmods.daedalus.event.TickTracker;
 import net.zmods.daedalus.module.ModuleManager;
 import org.luaj.vm2.*;
@@ -71,6 +72,20 @@ public class CoreApi implements LuaApiRegistry.LuaApiModule {
             public LuaValue call(LuaValue arg) {
                 Daedalus.LOGGER.error(arg.tojstring());
                 return LuaValue.NIL;
+            }
+        });
+
+        table.set("sleep", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue ticksArg) {
+                int ticks = ticksArg.checkint();
+                LuaThread current = globals.running;
+                if (current == null) {
+                    return error("sleep() cannot be called outside of a script coroutine");
+                }
+                long wakeTick = TickTracker.get() + ticks;
+                LuaScheduler.getInstance().scheduleResume(wakeTick, current);
+                return globals.yield(LuaValue.NONE).arg1();
             }
         });
 

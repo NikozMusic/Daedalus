@@ -72,6 +72,13 @@ public class Daedalus implements ModInitializer {
 			LOGGER.info("Daedalus module system initialized");
 		});
 
+		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			net.zmods.daedalus.event.TickTracker.increment();
+			net.zmods.daedalus.event.LuaScheduler.getInstance().tick();
+			EventFirer.fireGlobalEvent(Events.TICK);
+		});
+
+		//config
 		if (Config.enableDaedalusCommand) {
 			CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
 					DaedalusCommand.register(dispatcher));
