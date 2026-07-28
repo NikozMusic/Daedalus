@@ -30,7 +30,7 @@ import net.minecraft.resources.Identifier;
 
 public class Daedalus implements ModInitializer {
 	public static final String MODID = "daedalus";
-	private static final Logger LOGGER = LogUtils.getLogger();
+	public static final Logger LOGGER = LogUtils.getLogger();
 	private static ModuleManager moduleManager;
 
 	@Override

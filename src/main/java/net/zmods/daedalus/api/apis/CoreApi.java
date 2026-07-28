@@ -1,7 +1,9 @@
 package net.zmods.daedalus.api.apis;
 
+import net.zmods.daedalus.Daedalus;
 import net.zmods.daedalus.api.LuaApiRegistry;
 import net.zmods.daedalus.event.TickTracker;
+import net.zmods.daedalus.module.ModuleManager;
 import org.luaj.vm2.*;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.TwoArgFunction;
@@ -34,7 +36,7 @@ public class CoreApi implements LuaApiRegistry.LuaApiModule {
         });
 
         // minecraft.getVersion() -> "0.4.0" (the Daedalus mod version)
-        table.set("getVersion", new ZeroArgFunction() {
+        table.set("getDaedalusVersion", new ZeroArgFunction() {
             @Override
             public LuaValue call() {
                 String version = FabricLoader.getInstance()
@@ -44,6 +46,34 @@ public class CoreApi implements LuaApiRegistry.LuaApiModule {
                 return LuaValue.valueOf(version);
             }
         });
+
+        table.set("getMinecraftVersion", new ZeroArgFunction() {
+            @Override
+            public LuaValue call() {
+                String version = FabricLoader.getInstance()
+                        .getModContainer("minecraft")
+                        .map(c -> c.getMetadata().getVersion().getFriendlyString())
+                        .orElse("Unknown");
+                return LuaValue.valueOf(version);
+            }
+        });
+
+        table.set("warn", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue arg) {
+                Daedalus.LOGGER.warn(arg.tojstring());
+                return LuaValue.NIL;
+            }
+        });
+
+        table.set("error", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue arg) {
+                Daedalus.LOGGER.error(arg.tojstring());
+                return LuaValue.NIL;
+            }
+        });
+        
 
     }
 }
