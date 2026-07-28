@@ -19,3 +19,8 @@ function text.strip(input) end
 ---@param player ServerPlayer
 ---@param input string
 function text.send(player, input) end
+
+
+---Parses text into minimessage compatible text
+---@param text string
+function text.parse(text)

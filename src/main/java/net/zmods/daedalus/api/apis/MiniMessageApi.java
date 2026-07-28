@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import org.luaj.vm2.*;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.TwoArgFunction;
+import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 
 public class MiniMessageApi implements LuaApiRegistry.LuaApiModule {
 
@@ -60,6 +61,14 @@ public class MiniMessageApi implements LuaApiRegistry.LuaApiModule {
                 Component component = MINI_MESSAGE.deserialize(input.checkjstring());
                 sp.sendSystemMessage(toVanilla(component));
                 return NIL;
+            }
+        });
+
+        table.set("parse", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue input) {
+                Component component = MINI_MESSAGE.deserialize(input.checkjstring());
+                return CoerceJavaToLua.coerce(toVanilla(component));
             }
         });
     }
