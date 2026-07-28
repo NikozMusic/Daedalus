@@ -1,6 +1,7 @@
 package net.zmods.daedalus.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -54,18 +55,60 @@ public class DaedalusCommand {
                             ctx.getSource().sendSuccess(() -> Component.literal("§9§l[Daedalus]§r Runtime resumed."), true);
                             return 1;
                         }))
-                        .then(Commands.literal("info").executes(ctx -> {
-                            String daedalusVersion = FabricLoader.getInstance()
-                                    .getModContainer("daedalus")
-                                    .map(c -> c.getMetadata().getVersion().getFriendlyString())
-                                    .orElse("Unknown");
+                        .then(Commands.literal("info")
+                                .executes(ctx -> {
+                                    String daedalusVersion = FabricLoader.getInstance()
+                                            .getModContainer("daedalus")
+                                            .map(c -> c.getMetadata().getVersion().getFriendlyString())
+                                            .orElse("Unknown");
 
-                            ctx.getSource().sendSuccess(() -> Component.literal("§9§l[Daedalus]§r Runtime Information:"), false);
-                            ctx.getSource().sendSuccess(() -> Component.literal(" §7Daedalus Version: §f" + daedalusVersion), false);
-                            ctx.getSource().sendSuccess(() -> Component.literal(" §7Lua Version: §f5.2"), false);
-                            ctx.getSource().sendSuccess(() -> Component.literal(" §7Lua§6J §7Version: §f3.0.1"), false);
-                            return 1;
-                        }))
-        );
+                                    ctx.getSource().sendSuccess(() -> Component.literal("§9§l[Daedalus]§r Runtime Information:"), false);
+                                    ctx.getSource().sendSuccess(() -> Component.literal(" §7Daedalus Version: §f" + daedalusVersion), false);
+                                    ctx.getSource().sendSuccess(() -> Component.literal(" §7Lua Version: §f5.2"), false);
+                                    ctx.getSource().sendSuccess(() -> Component.literal(" §7Lua§6J §7Version: §f3.0.1"), false);
+                                    return 1;
+                                })
+                                .then(Commands.argument("module", StringArgumentType.word())
+                                        .executes(ctx -> {
+                                            String id = StringArgumentType.getString(ctx, "module");
+
+                                            ModuleManager manager = Daedalus.getModuleManager();
+                                            LoadedModule target = manager.getAllModules()
+                                                    .stream()
+                                                    .filter(module -> module.metadata.data.id.equals(id))
+                                                    .findFirst()
+                                                    .orElse(null);
+
+                                            if (target == null) {
+                                                ctx.getSource().sendFailure(
+                                                        Component.literal("§9§l[Daedalus]§r Module not found: §c" + id)
+                                                );
+                                                return 0;
+                                            }
+
+                                            ctx.getSource().sendSuccess(() -> Component.literal(
+                                                    "§9§l[Daedalus]§r Module Information:"
+                                            ), false);
+
+                                            ctx.getSource().sendSuccess(() -> Component.literal(
+                                                    " §7ID: §f" + target.metadata.data.id
+                                            ), false);
+
+                                            ctx.getSource().sendSuccess(() -> Component.literal(
+                                                    " §7Name: §f" + target.metadata.info.name
+                                            ), false);
+
+                                            ctx.getSource().sendSuccess(() -> Component.literal(
+                                                    " §7Description: §f" + target.metadata.info.description
+                                            ), false);
+
+                                            ctx.getSource().sendSuccess(() -> Component.literal(
+                                                    " §7Author: §f" + target.metadata.info.author
+                                            ), false);
+
+                                            return 1;
+                                        })
+                                )
+        ));
     }
 }

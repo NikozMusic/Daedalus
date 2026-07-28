@@ -16,5 +16,6 @@ public class ModuleMetadata {
     public static class Info {
         public String name;
         public String description;
+        public String author;
     }
 }
