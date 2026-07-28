@@ -46,13 +46,21 @@ public class PlayerApi implements LuaApiRegistry.LuaApiModule {
         table.set("getByName", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue nameArg) {
-                ServerPlayer sp = server.getPlayerList().getPlayerByName(nameArg.checkjstring());
+                String name = nameArg.checkjstring();
+
+                ServerPlayer sp = server.getPlayerList().getPlayerByName(name);
+
+                System.out.println("[Daedalus] getByName: " + name + " -> " + sp);
+
                 if (sp == null) return NIL;
 
-                return new LuaUserdata(sp);
+                LuaValue value = CoerceJavaToLua.coerce(sp);
+
+                System.out.println("[Daedalus] returned: " + value.typename());
+
+                return value;
             }
         });
-
         // player.isOnline("Steve") -> boolean
         table.set("isOnline", new OneArgFunction() {
             @Override

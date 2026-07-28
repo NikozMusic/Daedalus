@@ -24,11 +24,9 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import static net.minecraft.world.inventory.ContainerInput.*;
-
 public class GuiApi implements LuaApiRegistry.LuaApiModule {
 
-    private static final Map<AbstractContainerMenu, String> menuTitles = new WeakHashMap<>();
+    private static final Map<AbstractContainerMenu, Component> menuTitles = new WeakHashMap<>();
 
     @Override
     public String getNamespace() {
@@ -47,19 +45,33 @@ public class GuiApi implements LuaApiRegistry.LuaApiModule {
         };
     }
 
-    private static @NonNull MenuProvider buildProvider(int rows, String title, MenuType<ChestMenu> menuType) {
+    private static @NonNull MenuProvider buildProvider(
+            int rows,
+            Component title,
+            MenuType<ChestMenu> menuType
+    ) {
         SimpleContainer inventory = new SimpleContainer(rows * 9);
-        Component titleComponent = Component.literal(title);
 
         return new MenuProvider() {
+
             @Override
             public Component getDisplayName() {
-                return titleComponent;
+                return title;
             }
 
             @Override
-            public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
-                return new DaedalusChestMenu(menuType, syncId, playerInventory, inventory, rows);
+            public AbstractContainerMenu createMenu(
+                    int syncId,
+                    Inventory playerInventory,
+                    Player player
+            ) {
+                return new DaedalusChestMenu(
+                        menuType,
+                        syncId,
+                        playerInventory,
+                        inventory,
+                        rows
+                );
             }
         };
     }
@@ -80,136 +92,268 @@ public class GuiApi implements LuaApiRegistry.LuaApiModule {
     @Override
     public void register(LuaTable table, Globals globals) {
 
+        // gui.open(player, title, rows)
         table.set("open", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                ServerPlayer sp = (ServerPlayer) args.checkuserdata(1, ServerPlayer.class);
-                String title = args.checkjstring(2);
+
+                ServerPlayer sp =
+                        (ServerPlayer) args.checkuserdata(1, ServerPlayer.class);
+
+                Component title;
+
+                if (args.arg(2).isuserdata(Component.class)) {
+                    title = (Component) args.checkuserdata(2, Component.class);
+                } else {
+                    title = Component.literal(args.checkjstring(2));
+                }
+
                 int rows = args.checkint(3);
 
                 MenuType<ChestMenu> menuType = menuTypeForRows(rows);
+
                 if (menuType == null) {
-                    return LuaValue.error("Invalid row count: " + rows + " (must be 1-6)");
+                    return LuaValue.error(
+                            "Invalid row count: " + rows + " (must be 1-6)"
+                    );
                 }
 
-                MenuProvider provider = buildProvider(rows, title, menuType);
+                MenuProvider provider =
+                        buildProvider(rows, title, menuType);
+
                 sp.openMenu(provider);
 
                 AbstractContainerMenu opened = sp.containerMenu;
+
                 menuTitles.put(opened, title);
 
                 return CoerceJavaToLua.coerce(opened);
             }
         });
 
+
+        // gui.getOpen(player)
         table.set("getOpen", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue playerArg) {
-                ServerPlayer sp = (ServerPlayer) playerArg.checkuserdata(ServerPlayer.class);
+
+                ServerPlayer sp =
+                        (ServerPlayer) playerArg.checkuserdata(ServerPlayer.class);
+
                 AbstractContainerMenu menu = sp.containerMenu;
-                if (menu == sp.inventoryMenu) return NIL;
+
+                if (menu == sp.inventoryMenu)
+                    return NIL;
+
                 return CoerceJavaToLua.coerce(menu);
             }
         });
 
+
+        // gui.getTitle(player)
         table.set("getTitle", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue playerArg) {
-                ServerPlayer sp = (ServerPlayer) playerArg.checkuserdata(ServerPlayer.class);
+
+                ServerPlayer sp =
+                        (ServerPlayer) playerArg.checkuserdata(ServerPlayer.class);
+
                 AbstractContainerMenu menu = sp.containerMenu;
-                if (menu == sp.inventoryMenu) return NIL;
-                String title = menuTitles.get(menu);
-                return title != null ? LuaValue.valueOf(title) : NIL;
+
+                if (menu == sp.inventoryMenu)
+                    return NIL;
+
+                Component title = menuTitles.get(menu);
+
+                if (title == null)
+                    return NIL;
+
+                return CoerceJavaToLua.coerce(title);
             }
         });
 
+
+        // gui.close(player)
         table.set("close", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue playerArg) {
-                ServerPlayer sp = (ServerPlayer) playerArg.checkuserdata(ServerPlayer.class);
+
+                ServerPlayer sp =
+                        (ServerPlayer) playerArg.checkuserdata(ServerPlayer.class);
+
                 sp.closeContainer();
+
                 return NIL;
             }
         });
 
+
+        // gui.setItem(menu, slot, item)
         table.set("setItem", new ThreeArgFunction() {
             @Override
-            public LuaValue call(LuaValue menuArg, LuaValue slotArg, LuaValue itemArg) {
-                AbstractContainerMenu menu = (AbstractContainerMenu) menuArg.checkuserdata(AbstractContainerMenu.class);
+            public LuaValue call(
+                    LuaValue menuArg,
+                    LuaValue slotArg,
+                    LuaValue itemArg
+            ) {
+
+                AbstractContainerMenu menu =
+                        (AbstractContainerMenu)
+                                menuArg.checkuserdata(AbstractContainerMenu.class);
+
                 int slot = slotArg.checkint();
-                ItemStack stack = (ItemStack) itemArg.checkuserdata(ItemStack.class);
+
+                ItemStack stack =
+                        (ItemStack)
+                                itemArg.checkuserdata(ItemStack.class);
+
 
                 if (slot < 0 || slot >= menu.slots.size()) {
-                    return error("Slot index out of range: " + slot + " (menu has " + menu.slots.size() + " slots)");
+                    return error(
+                            "Slot index out of range: "
+                                    + slot
+                                    + " (menu has "
+                                    + menu.slots.size()
+                                    + " slots)"
+                    );
                 }
 
                 menu.getSlot(slot).set(stack);
                 menu.broadcastChanges();
+
                 return NIL;
             }
         });
 
+
+        // gui.getItem(menu, slot)
         table.set("getItem", new TwoArgFunction() {
             @Override
-            public LuaValue call(LuaValue menuArg, LuaValue slotArg) {
-                AbstractContainerMenu menu = (AbstractContainerMenu) menuArg.checkuserdata(AbstractContainerMenu.class);
+            public LuaValue call(
+                    LuaValue menuArg,
+                    LuaValue slotArg
+            ) {
+
+                AbstractContainerMenu menu =
+                        (AbstractContainerMenu)
+                                menuArg.checkuserdata(AbstractContainerMenu.class);
+
                 int slot = slotArg.checkint();
 
+
                 if (slot < 0 || slot >= menu.slots.size()) {
-                    return error("Slot index out of range: " + slot + " (menu has " + menu.slots.size() + " slots)");
+                    return error(
+                            "Slot index out of range: "
+                                    + slot
+                                    + " (menu has "
+                                    + menu.slots.size()
+                                    + " slots)"
+                    );
                 }
 
+
                 ItemStack stack = menu.getSlot(slot).getItem();
-                if (stack.isEmpty()) return NIL;
+
+                if (stack.isEmpty())
+                    return NIL;
+
                 return CoerceJavaToLua.coerce(stack);
             }
         });
 
+
+        // gui.clearItem(menu, slot)
         table.set("clearItem", new TwoArgFunction() {
             @Override
-            public LuaValue call(LuaValue menuArg, LuaValue slotArg) {
-                AbstractContainerMenu menu = (AbstractContainerMenu) menuArg.checkuserdata(AbstractContainerMenu.class);
+            public LuaValue call(
+                    LuaValue menuArg,
+                    LuaValue slotArg
+            ) {
+
+                AbstractContainerMenu menu =
+                        (AbstractContainerMenu)
+                                menuArg.checkuserdata(AbstractContainerMenu.class);
+
                 int slot = slotArg.checkint();
 
+
                 if (slot < 0 || slot >= menu.slots.size()) {
-                    return error("Slot index out of range: " + slot + " (menu has " + menu.slots.size() + " slots)");
+                    return error(
+                            "Slot index out of range: "
+                                    + slot
+                                    + " (menu has "
+                                    + menu.slots.size()
+                                    + " slots)"
+                    );
                 }
+
 
                 menu.getSlot(slot).set(ItemStack.EMPTY);
                 menu.broadcastChanges();
+
                 return NIL;
             }
         });
 
+
+        // gui.getSlotCount(menu)
         table.set("getSlotCount", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue menuArg) {
-                AbstractContainerMenu menu = (AbstractContainerMenu) menuArg.checkuserdata(AbstractContainerMenu.class);
+
+                AbstractContainerMenu menu =
+                        (AbstractContainerMenu)
+                                menuArg.checkuserdata(AbstractContainerMenu.class);
+
                 return LuaValue.valueOf(menu.slots.size());
             }
         });
 
-        // gui.onClick(menu, function(player, slot, clickType) ... end)
+
+        // gui.onClick(menu, function(player, slot, clickType))
         table.set("onClick", new TwoArgFunction() {
             @Override
-            public LuaValue call(LuaValue menuArg, LuaValue function) {
-                AbstractContainerMenu menu = (AbstractContainerMenu) menuArg.checkuserdata(AbstractContainerMenu.class);
+            public LuaValue call(
+                    LuaValue menuArg,
+                    LuaValue function
+            ) {
+
+                AbstractContainerMenu menu =
+                        (AbstractContainerMenu)
+                                menuArg.checkuserdata(AbstractContainerMenu.class);
+
 
                 if (!(menu instanceof DaedalusChestMenu daedalusMenu)) {
-                    return error("onClick can only be used on menus created via gui.open");
-                }
-                if (!function.isfunction()) {
-                    return error("Second argument must be a function");
+                    return error(
+                            "onClick can only be used on menus created via gui.open"
+                    );
                 }
 
-                daedalusMenu.setClickHandler((player, slot, clickType, button) -> {
-                    String typeStr = clickTypeToString(clickType, button);
-                    function.invoke(LuaValue.varargsOf(new LuaValue[]{
-                            CoerceJavaToLua.coerce(player),
-                            LuaValue.valueOf(slot),
-                            LuaValue.valueOf(typeStr)
-                    }));
-                });
+
+                if (!function.isfunction()) {
+                    return error(
+                            "Second argument must be a function"
+                    );
+                }
+
+
+                daedalusMenu.setClickHandler(
+                        (player, slot, clickType, button) -> {
+
+                            String typeStr =
+                                    clickTypeToString(clickType, button);
+
+                            function.invoke(
+                                    LuaValue.varargsOf(
+                                            new LuaValue[]{
+                                                    CoerceJavaToLua.coerce(player),
+                                                    LuaValue.valueOf(slot),
+                                                    LuaValue.valueOf(typeStr)
+                                            }
+                                    )
+                            );
+                        }
+                );
 
                 return NIL;
             }
