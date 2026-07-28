@@ -40,7 +40,7 @@
 ---@field ITEM_PICKUP "itemPickup"
 ---@field ITEM_DROP "itemDrop"
 
----@class event
+---@class events
 ---@field Events DaedalusEvents
 event = {}
 
