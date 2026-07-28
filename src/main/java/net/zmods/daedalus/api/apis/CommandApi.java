@@ -1,5 +1,6 @@
 package net.zmods.daedalus.api.apis;
 
+import net.minecraft.server.level.ServerLevel;
 import net.zmods.daedalus.api.LuaApiRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.commands.CommandSource;
@@ -10,6 +11,47 @@ import org.luaj.vm2.*;
 import org.luaj.vm2.lib.VarArgFunction;
 
 public class CommandApi implements LuaApiRegistry.LuaApiModule {
+
+    //Helpers
+    private enum ExecuteLevel {
+        OVERWORLD,
+        NETHER,
+        END,
+        ALL
+    }
+
+    private ExecuteLevel parseLevel(String level) {
+        return switch (level.toLowerCase()) {
+            case "overworld" -> ExecuteLevel.OVERWORLD;
+            case "nether" -> ExecuteLevel.NETHER;
+            case "end" -> ExecuteLevel.END;
+            case "all" -> ExecuteLevel.ALL;
+            default -> throw new IllegalArgumentException("Unknown level: " + level);
+        };
+    }
+
+    private ServerLevel getLevel(ExecuteLevel level) {
+        return switch (level) {
+            case OVERWORLD -> server.overworld();
+            case NETHER -> server.getLevel(ServerLevel.NETHER);
+            case END -> server.getLevel(ServerLevel.END);
+            default -> null;
+        };
+    }
+
+    private CommandSourceStack createSource(ServerLevel level, StringBuilder output) {
+        CommandSourceStack source = server.createCommandSourceStack()
+                .withSource(capturingSource(output));
+
+        if (level != null) {
+            source = source.withLevel(level);
+        }
+
+        return source;
+    }
+
+
+    //Main part
     private final MinecraftServer server;
 
     public CommandApi(MinecraftServer server) {
@@ -84,13 +126,13 @@ public class CommandApi implements LuaApiRegistry.LuaApiModule {
     @Override
     public void register(LuaTable table, Globals globals) {
         // command.execute("say hi") -> result:int, output:string
+
         table.set("execute", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 String command = args.checkjstring(1);
                 StringBuilder output = new StringBuilder();
-                CommandSourceStack source = server.createCommandSourceStack()
-                        .withSource(capturingSource(output));
+                CommandSourceStack source = createSource(server.overworld(), output);
                 return runCommand(source, command, output);
             }
         });
@@ -105,8 +147,49 @@ public class CommandApi implements LuaApiRegistry.LuaApiModule {
 
                 CommandSourceStack source = server.createCommandSourceStack()
                         .withPosition(entity.position())
+                        .withLevel((ServerLevel) entity.level())
                         .withSource(capturingSource(output));
                 return runCommand(source, command, output);
+            }
+        });
+
+        // command.executeIn("overworld", "say hi") -> result:int, output:string
+        table.set("executeIn", new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                String levelName = args.checkjstring(1);
+                String command = args.checkjstring(2);
+                ExecuteLevel level = parseLevel(levelName);
+                StringBuilder output = new StringBuilder();
+                if (level == ExecuteLevel.ALL) {
+                    int result = 0;
+
+                    for (ExecuteLevel dimension : new ExecuteLevel[]{
+                            ExecuteLevel.OVERWORLD,
+                            ExecuteLevel.NETHER,
+                            ExecuteLevel.END
+                    }) {
+                        ServerLevel serverLevel = getLevel(dimension);
+                        if (serverLevel == null)
+                            continue;
+                        Varargs response = runCommand(
+                                createSource(serverLevel, output),
+                                command,
+                                output
+                        );
+                        result = Math.max(result, response.arg1().toint());
+                    }
+                    return LuaValue.varargsOf(
+                            LuaValue.valueOf(result),
+                            LuaValue.valueOf(output.toString())
+                    );
+                }
+                ServerLevel serverLevel = getLevel(level);
+                return runCommand(
+                        createSource(serverLevel, output),
+                        command,
+                        output
+                );
             }
         });
     }
