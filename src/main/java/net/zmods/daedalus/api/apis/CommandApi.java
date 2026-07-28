@@ -1,6 +1,7 @@
 package net.zmods.daedalus.api.apis;
 
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec3;
 import net.zmods.daedalus.api.LuaApiRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.commands.CommandSource;
@@ -190,6 +191,43 @@ public class CommandApi implements LuaApiRegistry.LuaApiModule {
                         command,
                         output
                 );
+            }
+        });
+
+        // command.executeAt(x, y, z, "command")
+        // or
+        // command.executeAt("level", x, y, z, "command")
+        table.set("executeAt", new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                StringBuilder output = new StringBuilder();
+
+                CommandSourceStack source;
+
+                int offset;
+
+                // executeAt("nether", x, y, z, command)
+                if (args.arg1().isstring()) {
+                    ExecuteLevel level = parseLevel(args.checkjstring(1));
+
+                    double x = args.checkdouble(2);
+                    double y = args.checkdouble(3);
+                    double z = args.checkdouble(4);
+                    String command = args.checkjstring(5);
+                    ServerLevel serverLevel = getLevel(level);
+                    source = createSource(serverLevel, output)
+                            .withPosition(new Vec3(x, y, z));
+                    return runCommand(source, command, output);
+                }
+
+                // executeAt(x, y, z, command)
+                double x = args.checkdouble(1);
+                double y = args.checkdouble(2);
+                double z = args.checkdouble(3);
+                String command = args.checkjstring(4);
+                source = createSource(server.overworld(), output)
+                        .withPosition(new Vec3(x, y, z));
+                return runCommand(source, command, output);
             }
         });
     }
