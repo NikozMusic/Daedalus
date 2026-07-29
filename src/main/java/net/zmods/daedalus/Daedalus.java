@@ -157,8 +157,7 @@ public class Daedalus implements ModInitializer {
 					LuaValue.valueOf(damageTaken));
 		});
 
-		// ENTITY_HURT - fires before damage is applied and is cancellable: if any bound Lua
-		// function returns `false`, the damage is blocked entirely.
+		// ENTITY_HURT - fires before damage is applied and is cancellable.
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			boolean allowGlobal = EventFirer.fireCancellableGlobalEvent(Events.ENTITY_HURT,
 					CoerceJavaToLua.coerce(entity), LuaValue.valueOf(amount));
@@ -177,13 +176,6 @@ public class Daedalus implements ModInitializer {
 
 		// BLOCK_PLACE is fired from BlockItemPlaceMixin, since Fabric has no built-in
 		// placement-side equivalent of PlayerBlockBreakEvents.AFTER.
-
-		// NOTE: UseBlockCallback, UseItemCallback, AttackEntityCallback, and UseEntityCallback
-		// (fabric-events-interaction-v0) all fire on BOTH the logical client and logical server
-		// in singleplayer/integrated-server setups. The client-side invocation hands you a
-		// client Player (not a ServerPlayer), which crashes anything in Lua that expects a
-		// ServerPlayer specifically (e.g. players.getName). Guard every one of these with an
-		// instanceof check so we only ever fire on the authoritative server-side call.
 
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
 			if (player instanceof ServerPlayer serverPlayer) {
