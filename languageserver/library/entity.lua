@@ -58,3 +58,4 @@ function entity.kill(e) end
 ---@param e Entity
 ---@return ItemStack|nil
 function entity.getHeldItem(e) end
+

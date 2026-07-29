@@ -118,34 +118,6 @@ public class EventApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-        table.set("getBySelector", new org.luaj.vm2.lib.TwoArgFunction() {
-            @Override
-            public LuaValue call(LuaValue sourceArg, LuaValue selectorArg) {
-                CommandSourceStack source = (CommandSourceStack) sourceArg.checkuserdata(CommandSourceStack.class);
-
-                String selectorString = selectorArg.checkjstring();
-
-                try {
-                    EntitySelector selector = new EntitySelectorParser(new com.mojang.brigadier.StringReader(selectorString), true)
-                            .parse();
-
-                    List<? extends Entity> entities = selector.findEntities(source);
-
-                    LuaTable result = new LuaTable();
-
-                    int index = 1;
-                    for (Entity entity : entities) {
-                        result.set(index++, CoerceJavaToLua.coerce(entity));
-                    }
-
-                    return result;
-
-                } catch (Exception e) {
-                    return error("Invalid selector: " + e.getMessage());
-                }
-            }
-        });
-
 
     }
 }

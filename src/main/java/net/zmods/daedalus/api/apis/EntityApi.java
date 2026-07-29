@@ -201,5 +201,6 @@ public class EntityApi implements LuaApiRegistry.LuaApiModule {
                 return CoerceJavaToLua.coerce(stack);
             }
         });
+
     }
 }

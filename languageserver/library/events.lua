@@ -78,13 +78,6 @@
     itemUse              -> (player: ServerPlayer, stack: ItemStack)
     itemPickup           -> (player: ServerPlayer, stack: ItemStack)
     itemDrop             -> (player: ServerPlayer, stack: ItemStack)
-
-  Cancellable events:
-    "entityHurt" fires BEFORE damage is applied. If any bound callback
-    (global or entity-scoped) explicitly returns `false`, the damage is
-    blocked entirely. Returning nothing, nil, true, or any non-boolean value
-    allows the damage through. This is currently the only cancellable event -
-    returning `false` from callbacks bound to other events has no effect.
 ]]
 
 ---@class events
@@ -118,3 +111,10 @@ function events.unbindEntity(e, eventId) end
 ---@param eventId DaedalusEventId
 ---@param callback fun(...: any): boolean|nil
 function events.once(eventId, callback) end
+
+---@overload fun(selector:string): Entity[]
+---@overload fun(anchor:Entity, selector:string): Entity[]
+---@param source CommandSourceStack
+---@param selector string
+---@return Entity[]
+function entity.getBySelector(source, selector) end
