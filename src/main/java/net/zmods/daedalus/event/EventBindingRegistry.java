@@ -48,6 +48,17 @@ public class EventBindingRegistry {
         return bindings != null && !bindings.isEmpty();
     }
 
+    // Unlike hasEntityListeners, this doesn't need a specific entity - used for fast-path
+    // checks on per-tick loops (e.g. ENTITY_MOVE) where we want to know "is ANYONE listening
+    // to this event on ANY entity" before doing the more expensive per-entity work.
+    public boolean hasAnyEntityListenersForEvent(Events event) {
+        for (Map<Events, List<EventBinding>> entityMap : entityBindings.values()) {
+            List<EventBinding> bindings = entityMap.get(event);
+            if (bindings != null && !bindings.isEmpty()) return true;
+        }
+        return false;
+    }
+
     public void bindGlobalEvent(String moduleId, Events event, LuaValue function) {
         globalBindings.computeIfAbsent(event, k -> new ArrayList<>())
                 .add(new EventBinding(moduleId, function, null));
@@ -133,7 +144,6 @@ public class EventBindingRegistry {
             }
         }
     }
-
 
     public void clearAll() {
         globalBindings.clear();
