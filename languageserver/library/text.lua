@@ -23,4 +23,4 @@ function text.send(player, input) end
 
 ---Parses text into minimessage compatible text
 ---@param text string
-function text.parse(text)
+function text.parse(text) end
