@@ -44,7 +44,7 @@ public class Daedalus implements ModInitializer {
 	public void onInitialize() {
 		Config.load();
 
-		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			LuaApiRegistry apiRegistry = new LuaApiRegistry();
 
 			//Load all APIs as valid Java files in the project
