@@ -8,14 +8,28 @@ import net.minecraft.world.phys.Vec3;
 import org.luaj.vm2.*;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.selector.EntitySelector;
+import net.minecraft.commands.arguments.selector.EntitySelectorParser;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+
+import java.util.List;
 import java.util.UUID;
 
 
 public class EntityApi implements LuaApiRegistry.LuaApiModule {
+
+    private final MinecraftServer server;
+
+    public EntityApi(MinecraftServer server) {
+        this.server = server;
+    }
 
     @Override
     public String getNamespace() {
@@ -128,6 +142,51 @@ public class EntityApi implements LuaApiRegistry.LuaApiModule {
                 Entity e = (Entity) entityArg.checkuserdata(Entity.class);
                 e.kill(e.level() instanceof net.minecraft.server.level.ServerLevel serverLevel ? serverLevel : null);
                 return NIL;
+            }
+        });
+
+        // entity.getBySelector("@e[type=minecraft:zombie,distance=..10]") -> table of entities
+        // Resolves against the overworld at (0,0,0) with no invoking entity - fine for
+        // absolute selectors, but relative ones (distance=, @s, dx/dy/dz, etc.) need an anchor:
+        //
+        // entity.getBySelector(anchorEntity, "@e[distance=..5]") -> table of entities
+        // Resolves the selector as if it were run from anchorEntity's position/level (like @s
+        // refers to anchorEntity itself).
+        table.set("getBySelector", new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                Entity anchor = null;
+                String selectorStr;
+
+                if (args.arg1().isuserdata(Entity.class)) {
+                    anchor = (Entity) args.checkuserdata(1, Entity.class);
+                    selectorStr = args.checkjstring(2);
+                } else {
+                    selectorStr = args.checkjstring(1);
+                }
+
+                CommandSourceStack source = server.createCommandSourceStack();
+                if (anchor != null) {
+                    source = source
+                            .withEntity(anchor)
+                            .withPosition(anchor.position())
+                            .withLevel((ServerLevel) anchor.level());
+                }
+
+                try {
+                    EntitySelectorParser parser = new EntitySelectorParser(new StringReader(selectorStr), true);
+                    EntitySelector selector = parser.parse();
+                    List<? extends Entity> found = selector.findEntities(source);
+
+                    LuaTable result = new LuaTable();
+                    int i = 1;
+                    for (Entity e : found) {
+                        result.set(i++, CoerceJavaToLua.coerce(e));
+                    }
+                    return result;
+                } catch (CommandSyntaxException e) {
+                    return error("Invalid selector '" + selectorStr + "': " + e.getMessage());
+                }
             }
         });
 

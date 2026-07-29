@@ -44,14 +44,14 @@ public class Daedalus implements ModInitializer {
 	public void onInitialize() {
 		Config.load();
 
-		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			LuaApiRegistry apiRegistry = new LuaApiRegistry();
 
 			//Load all APIs as valid Java files in the project
 			apiRegistry.registerApi(new CoreApi());
 			apiRegistry.registerApi(new EventApi());
 			apiRegistry.registerApi(new CommandApi(server));
-			apiRegistry.registerApi(new EntityApi());
+			apiRegistry.registerApi(new EntityApi(server));
 			apiRegistry.registerApi(new DataApi());
 			apiRegistry.registerApi(new BlockApi());
 			apiRegistry.registerApi(new PlayerApi(server));
@@ -72,13 +72,6 @@ public class Daedalus implements ModInitializer {
 			LOGGER.info("Daedalus module system initialized");
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			net.zmods.daedalus.event.TickTracker.increment();
-			net.zmods.daedalus.event.LuaScheduler.getInstance().tick();
-			EventFirer.fireGlobalEvent(Events.TICK);
-		});
-
-		//config
 		if (Config.enableDaedalusCommand) {
 			CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
 					DaedalusCommand.register(dispatcher));
