@@ -24,4 +24,4 @@ function minecraft.warn(msg) end
 function minecraft.error(msg) end
 
 ---@param time integer
-function minecraft.sleep(time)
+function minecraft.sleep(time) end
