@@ -19,9 +19,9 @@ public enum Events {
     ENTITY_JUMP("entityJump"),
     ENTITY_DAMAGE("entityDamage"),
     ENTITY_DEATH("entityDeath"),
-    ENTITY_HURT("entityHurt"), // cancellable - fires before damage is applied
-    ENTITY_HEAL("entityHeal"),
-    ENTITY_MOVE("entityMove"), // players only, threshold-gated
+    ENTITY_HURT("entityHurt"), // cancellable
+    ENTITY_HEAL("entityHeal"), // cancellable
+    ENTITY_MOVE("entityMove"), // only calls player movement input
     ENTITY_LOAD("entityLoad"), // fires on spawn AND on chunk load - not spawn-exclusive
 
     // Block events

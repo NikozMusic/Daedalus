@@ -74,6 +74,7 @@ public class Daedalus implements ModInitializer {
 			apiRegistry.registerApi(new ItemApi());
 			apiRegistry.registerApi(new ServerApi(server));
 			apiRegistry.registerApi(new MiniMessageApi(server));
+			apiRegistry.registerApi(new RaycastApi());
 
 			moduleManager = new ModuleManager(
 					net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir().toFile(),
