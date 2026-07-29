@@ -42,7 +42,7 @@
 
 ---@class events
 ---@field Events DaedalusEvents
-event = {}
+events = {}
 
 ---Binds a global (server-wide) listener for the given module. See the
 ---signature table above for what args your function receives per event.
