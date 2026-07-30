@@ -1,6 +1,7 @@
 package net.zmods.daedalus.api.apis;
 
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.zmods.daedalus.api.LuaApiRegistry;
 import net.minecraft.world.entity.Entity;
@@ -199,6 +200,54 @@ public class EntityApi implements LuaApiRegistry.LuaApiModule {
                 }
                 ItemStack stack = living.getMainHandItem();
                 return CoerceJavaToLua.coerce(stack);
+            }
+        });
+
+        table.set("isPlayer", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue entityArg) {
+                Object obj = entityArg.checkuserdata();
+                return LuaValue.valueOf(obj instanceof Player);
+            }
+        });
+
+        table.set("getName", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue entityArg) {
+                Entity entity = (Entity) entityArg.checkuserdata(Entity.class);
+                return LuaValue.valueOf(entity.getName().getString());
+            }
+        });
+
+        table.set("getHealth", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue entityArg) {
+                Entity entity = (Entity) entityArg.checkuserdata(Entity.class);
+
+                if (!(entity instanceof LivingEntity living)) {
+                    return NIL;
+                }
+
+                return LuaValue.valueOf(living.getHealth());
+            }
+        });
+
+        table.set("setHealth", new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                Entity entity = (Entity) args.checkuserdata(1, Entity.class);
+
+                if (!(entity instanceof LivingEntity living)) {
+                    return NONE;
+                }
+
+                float health = (float) args.checkdouble(2);
+
+                // Clamp between 0 and max health
+                health = Math.clamp(health, 0, living.getMaxHealth());
+
+                living.setHealth(health);
+                return NONE;
             }
         });
 

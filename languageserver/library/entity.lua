@@ -59,3 +59,10 @@ function entity.kill(e) end
 ---@return ItemStack|nil
 function entity.getHeldItem(e) end
 
+---@return number
+function entity.getHealth() end
+
+---@param e Entity
+---@return string
+function entity.getName(e) end
+

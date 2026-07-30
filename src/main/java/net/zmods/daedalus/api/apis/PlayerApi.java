@@ -148,6 +148,5 @@ public class PlayerApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-
     }
 }

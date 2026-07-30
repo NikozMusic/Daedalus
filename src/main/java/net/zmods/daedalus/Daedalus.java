@@ -49,11 +49,6 @@ public class Daedalus implements ModInitializer {
 	private static CommandDispatcher<CommandSourceStack> pendingDispatcher;
 	private static CommandBuildContext pendingBuildContext;
 
-	// Tracks last-known position per player for ENTITY_MOVE - scoped to players only and
-	// gated by a displacement threshold to keep the per-tick cost bounded. Do not extend this
-	// to all entities without a much stricter opt-in/throttling mechanism.
-	// Threshold itself now comes from Config.entityMoveThreshold (blocks) instead of being
-	// hardcoded, so server operators can tune responsiveness vs. event traffic.
 	private static final Map<UUID, Vec3> lastPlayerPositions = new HashMap<>();
 
 	@Override
