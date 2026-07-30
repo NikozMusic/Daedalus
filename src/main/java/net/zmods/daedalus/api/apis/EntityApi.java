@@ -147,12 +147,6 @@ public class EntityApi implements LuaApiRegistry.LuaApiModule {
         });
 
         // entity.getBySelector("@e[type=minecraft:zombie,distance=..10]") -> table of entities
-        // Resolves against the overworld at (0,0,0) with no invoking entity - fine for
-        // absolute selectors, but relative ones (distance=, @s, dx/dy/dz, etc.) need an anchor:
-        //
-        // entity.getBySelector(anchorEntity, "@e[distance=..5]") -> table of entities
-        // Resolves the selector as if it were run from anchorEntity's position/level (like @s
-        // refers to anchorEntity itself).
         table.set("getBySelector", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
