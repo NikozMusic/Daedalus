@@ -251,5 +251,18 @@ public class EntityApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
+        table.set("getMaxHealth", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue entityArg) {
+                Entity entity = (Entity) entityArg.checkuserdata(Entity.class);
+
+                if (!(entity instanceof LivingEntity living)) {
+                    return NIL;
+                }
+
+                return LuaValue.valueOf(living.getMaxHealth());
+            }
+        });
+
     }
 }
