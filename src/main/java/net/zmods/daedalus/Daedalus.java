@@ -52,14 +52,16 @@ public class Daedalus implements ModInitializer {
 	// Tracks last-known position per player for ENTITY_MOVE - scoped to players only and
 	// gated by a displacement threshold to keep the per-tick cost bounded. Do not extend this
 	// to all entities without a much stricter opt-in/throttling mechanism.
+	// Threshold itself now comes from Config.entityMoveThreshold (blocks) instead of being
+	// hardcoded, so server operators can tune responsiveness vs. event traffic.
 	private static final Map<UUID, Vec3> lastPlayerPositions = new HashMap<>();
-	private static final double ENTITY_MOVE_THRESHOLD_SQ = 0.0025; // ~0.05 blocks, filters jitter
 
 	@Override
 	public void onInitialize() {
 		Config.load();
 
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+			ChatErrorReporter.setServer(server);
 			LuaApiRegistry apiRegistry = new LuaApiRegistry();
 
 			//Load all APIs as valid Java files in the project
@@ -118,6 +120,7 @@ public class Daedalus implements ModInitializer {
 			EventBindingRegistry registry = EventBindingRegistry.getInstance();
 			if (registry.hasGlobalListeners(Events.ENTITY_MOVE)
 					|| registry.hasAnyEntityListenersForEvent(Events.ENTITY_MOVE)) {
+				double thresholdSq = Config.entityMoveThreshold * Config.entityMoveThreshold;
 				for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
 					Vec3 current = sp.position();
 					Vec3 last = lastPlayerPositions.get(sp.getUUID());
@@ -128,7 +131,7 @@ public class Daedalus implements ModInitializer {
 						continue;
 					}
 
-					if (last.distanceToSqr(current) >= ENTITY_MOVE_THRESHOLD_SQ) {
+					if (last.distanceToSqr(current) >= thresholdSq) {
 						lastPlayerPositions.put(sp.getUUID(), current);
 						EventFirer.fireGlobalEvent(Events.ENTITY_MOVE,
 								CoerceJavaToLua.coerce(sp),

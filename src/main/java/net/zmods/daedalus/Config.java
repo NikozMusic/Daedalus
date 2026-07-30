@@ -14,11 +14,6 @@ public class Config {
     // e.g. server.stop() or accessing files outside the module's own directory
     public static boolean allowDangerousOperations = false;
 
-    // per-script execution timeout, in seconds.
-    // hook checked every 1000 instructions, so it's a guard against
-    // runaway/infinite Lua loops
-    public static int luaTimeoutSeconds = 5;
-
     // Whether the built-in "/daedalus" management command (reload, modules, debug, etc.) is registered.
     public static boolean enableDaedalusCommand = true;
 
@@ -57,7 +52,6 @@ public class Config {
                     ? GSON.fromJson(Files.readString(CONFIG_PATH), Data.class)
                     : new Data();
             allowDangerousOperations = data.allowDangerousOperations;
-            luaTimeoutSeconds = Math.max(1, Math.min(30, data.luaTimeoutSeconds));
             enableDaedalusCommand = data.enableDaedalusCommand;
             reportErrorsToChat = data.reportErrorsToChat;
             logModuleLoads = data.logModuleLoads;
@@ -72,7 +66,6 @@ public class Config {
     public static void save() throws IOException {
         Data data = new Data();
         data.allowDangerousOperations = allowDangerousOperations;
-        data.luaTimeoutSeconds = luaTimeoutSeconds;
         data.enableDaedalusCommand = enableDaedalusCommand;
         data.reportErrorsToChat = reportErrorsToChat;
         data.logModuleLoads = logModuleLoads;

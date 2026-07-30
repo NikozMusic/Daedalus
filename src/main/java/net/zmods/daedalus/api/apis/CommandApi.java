@@ -2,6 +2,7 @@ package net.zmods.daedalus.api.apis;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
+import net.zmods.daedalus.Config;
 import net.zmods.daedalus.api.LuaApiRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.commands.CommandSource;
@@ -97,6 +98,15 @@ public class CommandApi implements LuaApiRegistry.LuaApiModule {
         return command.startsWith("/") ? command.substring(1) : command;
     }
 
+    // Caps captured command output at Config.maxCommandOutputChars so a spammy
+    // command (e.g. "execute run say ..." spam, big /forceload, etc.) can't
+    // hand Lua an unbounded string.
+    private static String truncateOutput(String output) {
+        int max = Config.maxCommandOutputChars;
+        if (output.length() <= max) return output;
+        return output.substring(0, max) + "... [truncated, " + (output.length() - max) + " more chars]";
+    }
+
     // Runs the command straight through Brigadier so we get the int result code back
     // (e.g. 1 for a plain success, a count for things like "execute if ...", 0 on failure),
     // instead of performPrefixedCommand which discards that result and only logs internally.
@@ -106,7 +116,7 @@ public class CommandApi implements LuaApiRegistry.LuaApiModule {
             int result = source.getServer().getCommands().getDispatcher().execute(stripSlash(command), source);
             return LuaValue.varargsOf(
                     LuaValue.valueOf(result),
-                    LuaValue.valueOf(output.toString())
+                    LuaValue.valueOf(truncateOutput(output.toString()))
             );
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
             // Syntax/argument errors are normal Brigadier failures, not bugs - no stack trace needed
@@ -182,7 +192,7 @@ public class CommandApi implements LuaApiRegistry.LuaApiModule {
                     }
                     return LuaValue.varargsOf(
                             LuaValue.valueOf(result),
-                            LuaValue.valueOf(output.toString())
+                            LuaValue.valueOf(truncateOutput(output.toString()))
                     );
                 }
                 ServerLevel serverLevel = getLevel(level);
