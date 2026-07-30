@@ -1,5 +1,6 @@
 package net.zmods.daedalus.event;
 
+import net.zmods.daedalus.ChatErrorReporter;
 import org.luaj.vm2.LuaThread;
 import org.luaj.vm2.LuaValue;
 
@@ -27,8 +28,7 @@ public class LuaScheduler {
                 try {
                     p.thread.resume(LuaValue.NONE);
                 } catch (Exception e) {
-                    System.err.println("[Daedalus] Error resuming sleeping script");
-                    e.printStackTrace();
+                    ChatErrorReporter.report("Error resuming sleeping script", e);
                 }
             }
         }

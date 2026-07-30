@@ -11,6 +11,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
+import net.zmods.daedalus.ChatErrorReporter;
 import net.zmods.daedalus.api.LuaApiRegistry;
 import net.zmods.daedalus.command.CommandParser;
 import net.zmods.daedalus.command.ModuleCommandDefinition;
@@ -229,8 +230,7 @@ public class ModuleManager {
             System.out.println("[Daedalus] Loaded module: " + metadata.data.id + " (" + metadata.info.name + ")"
                     + (commands.isEmpty() ? "" : " with " + commands.size() + " command(s)"));
         } catch (Exception e) {
-            System.err.println("[Daedalus] Error executing module " + metadata.data.id);
-            e.printStackTrace();
+            ChatErrorReporter.report("Error executing module " + metadata.data.id, e);
         } finally {
             ModuleContext.clear();
         }
@@ -357,8 +357,7 @@ public class ModuleManager {
             LuaValue chunk = globals.load(code, def.luaFileKey, cmdEnv);
             chunk.call();
         } catch (Exception e) {
-            System.err.println("[Daedalus] Error executing command '" + def.name + "' (module " + def.moduleId + ")");
-            e.printStackTrace();
+            ChatErrorReporter.report("Error executing command '" + def.name + "' (module " + def.moduleId + ")", e);
             source.sendFailure(Component.literal("[Daedalus] Command error: " + e.getMessage()));
         } finally {
             ModuleContext.clear();

@@ -1,5 +1,6 @@
 package net.zmods.daedalus.event;
 
+import net.zmods.daedalus.ChatErrorReporter;
 import net.zmods.daedalus.module.DaedalusState;
 import net.zmods.daedalus.module.ModuleContext;
 import org.luaj.vm2.LuaValue;
@@ -22,8 +23,7 @@ public class EventFirer {
             try {
                 binding.function.invoke(LuaValue.varargsOf(args));
             } catch (Exception e) {
-                System.err.println("[Daedalus] Error firing event " + event.id + " in module " + binding.moduleId);
-                e.printStackTrace();
+                ChatErrorReporter.report("Error firing event " + event.id + " in module " + binding.moduleId, e);
             } finally {
                 ModuleContext.clear();
             }
@@ -45,8 +45,7 @@ public class EventFirer {
             try {
                 binding.function.invoke(LuaValue.varargsOf(args));
             } catch (Exception e) {
-                System.err.println("[Daedalus] Error firing event " + event.id + " in module " + binding.moduleId);
-                e.printStackTrace();
+                ChatErrorReporter.report("Error firing event " + event.id + " in module " + binding.moduleId, e);
             } finally {
                 ModuleContext.clear();
             }
@@ -72,8 +71,7 @@ public class EventFirer {
                     allow = false;
                 }
             } catch (Exception e) {
-                System.err.println("[Daedalus] Error firing event " + event.id + " in module " + binding.moduleId);
-                e.printStackTrace();
+                ChatErrorReporter.report("Error firing event " + event.id + " in module " + binding.moduleId, e);
             } finally {
                 ModuleContext.clear();
             }
@@ -100,8 +98,7 @@ public class EventFirer {
                     allow = false;
                 }
             } catch (Exception e) {
-                System.err.println("[Daedalus] Error firing event " + event.id + " in module " + binding.moduleId);
-                e.printStackTrace();
+                ChatErrorReporter.report("Error firing event " + event.id + " in module " + binding.moduleId, e);
             } finally {
                 ModuleContext.clear();
             }
