@@ -145,8 +145,7 @@ public class CommandApi implements LuaApiRegistry.LuaApiModule {
                 StringBuilder output = new StringBuilder();
                 CommandSourceStack source = createSource(server.overworld(), output);
                 return runCommand(source, command, output);
-            }
-        });
+            }        });
 
         // command.executeAs(entity, "say hi") -> result:int, output:string
         table.set("executeAs", new VarArgFunction() {
