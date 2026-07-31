@@ -42,6 +42,16 @@ function data.entityList(e) end
 ---@param e Entity
 function data.entityClear(e) end
 
+---Returns the entity's full vanilla NBT as a Lua table.
+---@param e Entity
+---@return table
+function data.entityGetRaw(e) end
+
+
+---@param e Entity
+---@param raw table
+function data.entitySetRaw(e, raw) end
+
 -- -- Item data --
 
 ---@param stack ItemStack
