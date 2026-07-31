@@ -74,8 +74,8 @@ public class BlockApi implements LuaApiRegistry.LuaApiModule {
             }
         });
 
-        // block.break(level, x, y, z) -> triggers natural destroy (drops + effects)
-        table.set("break", new VarArgFunction() {
+        // block.destroy(level, x, y, z) -> triggers natural destroy (drops + effects)
+        table.set("destroy", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 ServerLevel level = (ServerLevel) args.checkuserdata(1, ServerLevel.class);

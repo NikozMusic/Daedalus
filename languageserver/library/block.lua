@@ -34,7 +34,7 @@ function block.isAir(level, x, y, z) end
 ---@param x integer
 ---@param y integer
 ---@param z integer
-function block["break"](level, x, y, z) end
+function block.destroy(level, x, y, z) end
 
 ---Returns the combined block/sky light level at a position, 0-15.
 ---@param level ServerLevel
