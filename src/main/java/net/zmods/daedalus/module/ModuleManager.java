@@ -22,6 +22,7 @@ import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.PackageLib;
 import org.luaj.vm2.lib.StringLib;
 import org.luaj.vm2.lib.TableLib;
+import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.*;
 import java.io.*;
 import java.nio.file.*;
@@ -359,6 +360,54 @@ public class ModuleManager {
         } catch (Exception e) {
             ChatErrorReporter.report("Error executing command '" + def.name + "' (module " + def.moduleId + ")", e);
             source.sendFailure(Component.literal("[Daedalus] Command error: " + e.getMessage()));
+        } finally {
+            ModuleContext.clear();
+        }
+    }
+
+    public String runInlineLua(CommandSourceStack source, String code) {
+        LuaTable env = new LuaTable();
+        LuaTable mt = new LuaTable();
+        mt.set("__index", globals);
+        env.setmetatable(mt);
+
+        Entity sender = source.getEntity();
+        env.set("sender", sender != null ? CoerceJavaToLua.coerce(sender) : LuaValue.NIL);
+
+        StringBuilder printOutput = new StringBuilder();
+        env.set("print", new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                for (int i = 1; i <= args.narg(); i++) {
+                    if (i > 1) printOutput.append("\t");
+                    printOutput.append(args.arg(i).tojstring());
+                }
+                printOutput.append("\n");
+                return NONE;
+            }
+        });
+
+        LuaValue chunk;
+        try {
+            chunk = globals.load("return (" + code + ")", "=daedalus_run", env);
+        } catch (Exception expressionFailed) {
+            chunk = globals.load(code, "=daedalus_run", env);
+        }
+
+        ModuleContext.set("__console__");
+        try {
+            Varargs result = chunk.invoke();
+
+            StringBuilder sb = new StringBuilder(printOutput);
+            if (result.narg() == 0) {
+                sb.append("nil");
+            } else {
+                for (int i = 1; i <= result.narg(); i++) {
+                    if (i > 1) sb.append("\t");
+                    sb.append(result.arg(i).tojstring());
+                }
+            }
+            return sb.toString();
         } finally {
             ModuleContext.clear();
         }
